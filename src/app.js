@@ -1,42 +1,10 @@
+import productManager from "./productManager.js";
 import express from "express";
-import fs from "fs";
-let index = 0;
 
 const app = express();
 
-class ProductManager {
-    #path = "./products.json";
-    products = [];
-
-    async addProduct(title, description, price, thumbnail, code, stock) {
-        const newProduct = {
-            id: index,
-            title,
-            description,
-            price,
-            thumbnail,
-            code,
-            stock,
-    };
-
-    const products = await this.getProducts();
-    const updatedProducts = [...products, newProduct];
-    await fs.promises.writeFile(this.#path, JSON.stringify(updatedProducts)); //Crear archivo JSON con string del objeto base.
-    index = index + 1;
-    }
-
-    async getProducts() {
-        try {
-            const products = await fs.promises.readFile(this.#path, "utf-8");
-            return JSON.parse(products); //Retorna objeto del string almacenado en el JSON.
-        } catch (e) {
-            return [];
-        }
-    }
-}
-
 async function main() {
-    const manager = new ProductManager();
+    const manager = new productManager();
     const products = await manager.getProducts();
     
     //AGREGA 10 PRODUCTOS
@@ -61,14 +29,14 @@ async function main() {
         res.send(products);
     });
 
-    app.get("/products/:id", (req, res) => {
+    app.get("/products/:id", async (req, res) => {
         const {id} = req.params;
-        const product = products.find((p) => `${p.id}` === id);
+        const productito = await manager.getProductById(id);
 
-        if(!product){
+        if(!productito){
             return res.send({error: `¡No existe el producto con ID ${id}!`});
         }
-        res.send(product);
+        res.send(productito);
     });
     
     app.listen(8080, () => {
